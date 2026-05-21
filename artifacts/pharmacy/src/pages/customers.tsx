@@ -1,13 +1,52 @@
-import { useGetCustomers } from "@workspace/api-client-react";
+import { useState } from "react";
+import {
+  useGetCustomers, useCreateCustomer, useUpdateCustomer, useDeleteCustomer,
+  getGetCustomersQueryKey,
+} from "@workspace/api-client-react";
+import { useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Search, Plus } from "lucide-react";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Search, Plus, Edit, Trash2, Users } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+
+type Form = { name: string; phone: string; address: string; balance: string; notes: string };
+const EMPTY: Form = { name: "", phone: "", address: "", balance: "0", notes: "" };
 
 export default function Customers() {
-  const { data: customers, isLoading } = useGetCustomers({});
+  const [search, setSearch] = useState("");
+  const [open, setOpen] = useState(false);
+  const [editing, setEditing] = useState<number | null>(null);
+  const [form, setForm] = useState<Form>(EMPTY);
+  const [deleting, setDeleting] = useState<{ id: number; name: string } | null>(null);
+  const { toast } = useToast();
+  const qc = useQueryClient();
+
+  const { data: customers, isLoading } = useGetCustomers({ search: search.length > 1 ? search : undefined });
+  const create = useCreateCustomer();
+  const update = useUpdateCustomer();
+  const del = useDeleteCustomer();
+  const invalidate = () => qc.invalidateQueries({ queryKey: getGetCustomersQueryKey() });
+
+  const openAdd = () => { setForm(EMPTY); setEditing(null); setOpen(true); };
+  const openEdit = (c: NonNullable<typeof customers>[number]) => {
+    setForm({ name: c.name, phone: c.phone ?? "", address: c.address ?? "", balance: (c.balance ?? 0).toString(), notes: c.notes ?? "" });
+    setEditing(c.id); setOpen(true);
+  };
+
+  const handleSave = () => {
+    if (!form.name.trim()) { toast({ title: "الاسم مطلوب", variant: "destructive" }); return; }
+    const payload = { name: form.name, phone: form.phone || null, address: form.address || null, balance: parseFloat(form.balance) || 0, notes: form.notes || null };
+    if (editing) {
+      update.mutate({ id: editing, data: payload }, { onSuccess: () => { setOpen(false); invalidate(); toast({ title: "تم تحديث العميل" }); } });
+    } else {
+      create.mutate({ data: payload }, { onSuccess: () => { setOpen(false); invalidate(); toast({ title: "تم إضافة العميل" }); } });
+    }
+  };
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
@@ -16,17 +55,14 @@ export default function Customers() {
           <h1 className="text-3xl font-bold tracking-tight">العملاء</h1>
           <p className="text-muted-foreground mt-1">إدارة بيانات عملاء الصيدلية</p>
         </div>
-        <Button>
-          <Plus className="ml-2 h-4 w-4" />
-          إضافة عميل
-        </Button>
+        <Button onClick={openAdd}><Plus className="ml-2 h-4 w-4" /> إضافة عميل</Button>
       </div>
 
       <Card>
         <CardHeader className="py-4 border-b">
-          <div className="relative w-full max-w-sm">
+          <div className="relative max-w-sm">
             <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input placeholder="البحث عن عميل..." className="pl-3 pr-9" />
+            <Input placeholder="البحث عن عميل..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-3 pr-9" />
           </div>
         </CardHeader>
         <CardContent className="p-0">
@@ -35,30 +71,35 @@ export default function Customers() {
               <TableRow>
                 <TableHead className="text-right">الاسم</TableHead>
                 <TableHead className="text-right">رقم الهاتف</TableHead>
+                <TableHead className="text-right">العنوان</TableHead>
                 <TableHead className="text-right">إجمالي المبيعات</TableHead>
                 <TableHead className="text-right">الرصيد</TableHead>
                 <TableHead className="text-right">ملاحظات</TableHead>
+                <TableHead className="text-right">إجراءات</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {isLoading ? (
-                Array(4).fill(0).map((_, i) => (
-                  <TableRow key={i}>
-                    {Array(5).fill(0).map((_, j) => <TableCell key={j}><Skeleton className="h-6 w-full" /></TableCell>)}
-                  </TableRow>
-                ))
-              ) : customers?.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={5} className="text-center h-24 text-muted-foreground">لا يوجد عملاء</TableCell>
-                </TableRow>
+                Array(4).fill(0).map((_, i) => <TableRow key={i}>{Array(7).fill(0).map((_, j) => <TableCell key={j}><Skeleton className="h-5 w-full" /></TableCell>)}</TableRow>)
+              ) : !customers?.length ? (
+                <TableRow><TableCell colSpan={7} className="text-center h-28 text-muted-foreground"><Users className="h-8 w-8 mx-auto mb-2 opacity-30" />لا يوجد عملاء</TableCell></TableRow>
               ) : (
-                customers?.map((customer) => (
-                  <TableRow key={customer.id}>
-                    <TableCell className="font-medium">{customer.name}</TableCell>
-                    <TableCell dir="ltr" className="text-right">{customer.phone || '-'}</TableCell>
-                    <TableCell className="font-medium">${customer.totalSales?.toFixed(2) ?? '0.00'}</TableCell>
-                    <TableCell className="font-bold text-emerald-600">${customer.balance?.toFixed(2) ?? '0.00'}</TableCell>
-                    <TableCell className="text-muted-foreground max-w-[200px] truncate">{customer.notes || '-'}</TableCell>
+                customers.map((c) => (
+                  <TableRow key={c.id} className="hover:bg-muted/40">
+                    <TableCell className="font-medium">{c.name}</TableCell>
+                    <TableCell dir="ltr" className="text-right text-muted-foreground">{c.phone ?? "—"}</TableCell>
+                    <TableCell className="text-muted-foreground max-w-[160px] truncate">{c.address ?? "—"}</TableCell>
+                    <TableCell className="font-medium text-primary">{(c.totalSales ?? 0).toFixed(2)} ر.س</TableCell>
+                    <TableCell className={`font-bold ${(c.balance ?? 0) > 0 ? "text-destructive" : "text-emerald-600"}`}>
+                      {(c.balance ?? 0).toFixed(2)} ر.س
+                    </TableCell>
+                    <TableCell className="text-muted-foreground max-w-[160px] truncate">{c.notes ?? "—"}</TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-1">
+                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(c)}><Edit className="h-4 w-4" /></Button>
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => setDeleting({ id: c.id, name: c.name })}><Trash2 className="h-4 w-4" /></Button>
+                      </div>
+                    </TableCell>
                   </TableRow>
                 ))
               )}
@@ -66,6 +107,38 @@ export default function Customers() {
           </Table>
         </CardContent>
       </Card>
+
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent dir="rtl">
+          <DialogHeader><DialogTitle>{editing ? "تعديل العميل" : "إضافة عميل جديد"}</DialogTitle></DialogHeader>
+          <div className="grid grid-cols-1 gap-4 py-2">
+            <F label="الاسم *"><Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} /></F>
+            <F label="رقم الهاتف"><Input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} dir="ltr" className="text-right" /></F>
+            <F label="العنوان"><Input value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} /></F>
+            <F label="الرصيد (ر.س)"><Input type="number" min="0" step="0.01" value={form.balance} onChange={(e) => setForm({ ...form, balance: e.target.value })} dir="ltr" /></F>
+            <F label="ملاحظات"><Textarea value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} rows={3} /></F>
+          </div>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setOpen(false)}>إلغاء</Button>
+            <Button onClick={handleSave} disabled={create.isPending || update.isPending}>{create.isPending || update.isPending ? "جاري الحفظ..." : "حفظ"}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!deleting} onOpenChange={() => setDeleting(null)}>
+        <DialogContent dir="rtl">
+          <DialogHeader><DialogTitle>تأكيد الحذف</DialogTitle></DialogHeader>
+          <p className="text-muted-foreground">هل تريد حذف العميل <span className="font-bold text-foreground">{deleting?.name}</span>؟</p>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setDeleting(null)}>إلغاء</Button>
+            <Button variant="destructive" onClick={() => del.mutate({ id: deleting!.id }, { onSuccess: () => { setDeleting(null); invalidate(); toast({ title: "تم حذف العميل" }); } })} disabled={del.isPending}>حذف</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
+}
+
+function F({ label, children }: { label: string; children: React.ReactNode }) {
+  return <div className="space-y-1.5"><label className="text-sm font-medium">{label}</label>{children}</div>;
 }
