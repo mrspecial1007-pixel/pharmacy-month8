@@ -1,0 +1,70 @@
+import { Switch, Route, Router as WouterRouter } from "wouter";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { Toaster } from "@/components/ui/toaster";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { AppLayout } from "@/components/layout/app-layout";
+
+import Dashboard from "@/pages/dashboard";
+import Medicines from "@/pages/medicines";
+import POS from "@/pages/pos";
+import Purchases from "@/pages/purchases";
+import Accounts from "@/pages/accounts";
+import SalesHistory from "@/pages/sales-history";
+import Returns from "@/pages/returns";
+import Shifts from "@/pages/shifts";
+import Inventory from "@/pages/inventory";
+import StockMovements from "@/pages/stock-movements";
+import AuditLog from "@/pages/audit-log";
+import ExpiryAnalysis from "@/pages/expiry-analysis";
+import Reports from "@/pages/reports";
+import Categories from "@/pages/categories";
+import Suppliers from "@/pages/suppliers";
+import Customers from "@/pages/customers";
+import Expenses from "@/pages/expenses";
+import Settings from "@/pages/settings";
+import NotFound from "@/pages/not-found";
+
+const queryClient = new QueryClient();
+
+function Router() {
+  return (
+    <AppLayout>
+      <Switch>
+        <Route path="/" component={Dashboard} />
+        <Route path="/medicines" component={Medicines} />
+        <Route path="/pos" component={POS} />
+        <Route path="/purchases" component={Purchases} />
+        <Route path="/accounts" component={Accounts} />
+        <Route path="/sales-history" component={SalesHistory} />
+        <Route path="/returns" component={Returns} />
+        <Route path="/shifts" component={Shifts} />
+        <Route path="/inventory" component={Inventory} />
+        <Route path="/stock-movements" component={StockMovements} />
+        <Route path="/audit-log" component={AuditLog} />
+        <Route path="/expiry-analysis" component={ExpiryAnalysis} />
+        <Route path="/reports" component={Reports} />
+        <Route path="/categories" component={Categories} />
+        <Route path="/suppliers" component={Suppliers} />
+        <Route path="/customers" component={Customers} />
+        <Route path="/expenses" component={Expenses} />
+        <Route path="/settings" component={Settings} />
+        <Route component={NotFound} />
+      </Switch>
+    </AppLayout>
+  );
+}
+
+function App() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
+          <Router />
+        </WouterRouter>
+        <Toaster />
+      </TooltipProvider>
+    </QueryClientProvider>
+  );
+}
+
+export default App;

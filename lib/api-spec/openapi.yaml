@@ -1,22 +1,36 @@
 openapi: 3.1.0
 info:
-  # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: Pharmacy Management System API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
-    description: Health operations
+  - name: dashboard
+  - name: medicines
+  - name: categories
+  - name: suppliers
+  - name: customers
+  - name: sales
+  - name: purchases
+  - name: payments
+  - name: returns
+  - name: expenses
+  - name: inventory
+  - name: stock-movements
+  - name: audit-log
+  - name: shifts
+  - name: reports
+  - name: settings
+
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -24,13 +38,1780 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /dashboard/summary:
+    get:
+      operationId: getDashboardSummary
+      tags: [dashboard]
+      summary: Get dashboard summary statistics
+      responses:
+        "200":
+          description: Dashboard summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardSummary"
+
+  /dashboard/sales-chart:
+    get:
+      operationId: getDashboardSalesChart
+      tags: [dashboard]
+      summary: Get last 7 days sales and profit chart data
+      responses:
+        "200":
+          description: Sales chart data
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SalesChartPoint"
+
+  /dashboard/alerts:
+    get:
+      operationId: getDashboardAlerts
+      tags: [dashboard]
+      summary: Get low stock and near-expiry alerts
+      responses:
+        "200":
+          description: Alerts
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardAlerts"
+
+  /medicines:
+    get:
+      operationId: getMedicines
+      tags: [medicines]
+      summary: List medicines
+      parameters:
+        - name: search
+          in: query
+          schema:
+            type: string
+        - name: filter
+          in: query
+          schema:
+            type: string
+            enum: [all, low_stock, expired, near_expiry]
+        - name: category_id
+          in: query
+          schema:
+            type: ["integer", "null"]
+      responses:
+        "200":
+          description: List of medicines
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Medicine"
+    post:
+      operationId: createMedicine
+      tags: [medicines]
+      summary: Create a new medicine
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MedicineInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Medicine"
+
+  /medicines/{id}:
+    get:
+      operationId: getMedicine
+      tags: [medicines]
+      summary: Get medicine by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Medicine
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Medicine"
+    patch:
+      operationId: updateMedicine
+      tags: [medicines]
+      summary: Update medicine
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MedicineUpdate"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Medicine"
+    delete:
+      operationId: deleteMedicine
+      tags: [medicines]
+      summary: Delete medicine
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /medicines/barcode/{barcode}:
+    get:
+      operationId: getMedicineByBarcode
+      tags: [medicines]
+      summary: Get medicine by barcode
+      parameters:
+        - name: barcode
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Medicine
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Medicine"
+        "404":
+          description: Not found
+
+  /categories:
+    get:
+      operationId: getCategories
+      tags: [categories]
+      summary: List categories
+      responses:
+        "200":
+          description: List of categories
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Category"
+    post:
+      operationId: createCategory
+      tags: [categories]
+      summary: Create a category
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CategoryInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Category"
+
+  /categories/{id}:
+    patch:
+      operationId: updateCategory
+      tags: [categories]
+      summary: Update category
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CategoryInput"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Category"
+    delete:
+      operationId: deleteCategory
+      tags: [categories]
+      summary: Delete category
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /suppliers:
+    get:
+      operationId: getSuppliers
+      tags: [suppliers]
+      summary: List suppliers
+      parameters:
+        - name: search
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of suppliers
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Supplier"
+    post:
+      operationId: createSupplier
+      tags: [suppliers]
+      summary: Create supplier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SupplierInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Supplier"
+
+  /suppliers/{id}:
+    get:
+      operationId: getSupplier
+      tags: [suppliers]
+      summary: Get supplier
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Supplier
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Supplier"
+    patch:
+      operationId: updateSupplier
+      tags: [suppliers]
+      summary: Update supplier
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SupplierInput"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Supplier"
+    delete:
+      operationId: deleteSupplier
+      tags: [suppliers]
+      summary: Delete supplier
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /customers:
+    get:
+      operationId: getCustomers
+      tags: [customers]
+      summary: List customers
+      parameters:
+        - name: search
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of customers
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Customer"
+    post:
+      operationId: createCustomer
+      tags: [customers]
+      summary: Create customer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CustomerInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Customer"
+
+  /customers/{id}:
+    get:
+      operationId: getCustomer
+      tags: [customers]
+      summary: Get customer
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Customer
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Customer"
+    patch:
+      operationId: updateCustomer
+      tags: [customers]
+      summary: Update customer
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CustomerInput"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Customer"
+    delete:
+      operationId: deleteCustomer
+      tags: [customers]
+      summary: Delete customer
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /sales:
+    get:
+      operationId: getSales
+      tags: [sales]
+      summary: List sales invoices
+      parameters:
+        - name: search
+          in: query
+          schema:
+            type: string
+        - name: customer_id
+          in: query
+          schema:
+            type: ["integer", "null"]
+        - name: date_from
+          in: query
+          schema:
+            type: ["string", "null"]
+        - name: date_to
+          in: query
+          schema:
+            type: ["string", "null"]
+      responses:
+        "200":
+          description: List of sales
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SalesList"
+    post:
+      operationId: createSale
+      tags: [sales]
+      summary: Create a sale invoice
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SaleInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Sale"
+
+  /sales/{id}:
+    get:
+      operationId: getSale
+      tags: [sales]
+      summary: Get sale invoice details
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Sale with items
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SaleWithItems"
+
+  /purchases:
+    get:
+      operationId: getPurchases
+      tags: [purchases]
+      summary: List purchase invoices
+      parameters:
+        - name: supplier_id
+          in: query
+          schema:
+            type: ["integer", "null"]
+        - name: date_from
+          in: query
+          schema:
+            type: ["string", "null"]
+        - name: date_to
+          in: query
+          schema:
+            type: ["string", "null"]
+      responses:
+        "200":
+          description: List of purchases
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Purchase"
+    post:
+      operationId: createPurchase
+      tags: [purchases]
+      summary: Create a purchase invoice and update stock
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PurchaseInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Purchase"
+
+  /purchases/{id}:
+    get:
+      operationId: getPurchase
+      tags: [purchases]
+      summary: Get purchase invoice details
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Purchase with items
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PurchaseWithItems"
+
+  /payments:
+    get:
+      operationId: getPayments
+      tags: [payments]
+      summary: List payments
+      parameters:
+        - name: party_type
+          in: query
+          schema:
+            type: string
+            enum: [supplier, customer]
+        - name: party_id
+          in: query
+          schema:
+            type: ["integer", "null"]
+      responses:
+        "200":
+          description: List of payments
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Payment"
+    post:
+      operationId: createPayment
+      tags: [payments]
+      summary: Record a payment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PaymentInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Payment"
+
+  /returns:
+    get:
+      operationId: getReturns
+      tags: [returns]
+      summary: List returns
+      parameters:
+        - name: type
+          in: query
+          schema:
+            type: string
+            enum: [sale, purchase]
+      responses:
+        "200":
+          description: List of returns
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Return"
+    post:
+      operationId: createReturn
+      tags: [returns]
+      summary: Create a return
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReturnInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Return"
+
+  /expenses:
+    get:
+      operationId: getExpenses
+      tags: [expenses]
+      summary: List expenses
+      parameters:
+        - name: date_from
+          in: query
+          schema:
+            type: ["string", "null"]
+        - name: date_to
+          in: query
+          schema:
+            type: ["string", "null"]
+      responses:
+        "200":
+          description: List of expenses
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Expense"
+    post:
+      operationId: createExpense
+      tags: [expenses]
+      summary: Create an expense
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ExpenseInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Expense"
+
+  /expenses/{id}:
+    delete:
+      operationId: deleteExpense
+      tags: [expenses]
+      summary: Delete expense
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /inventory:
+    get:
+      operationId: getInventoryCount
+      tags: [inventory]
+      summary: Get inventory count list
+      responses:
+        "200":
+          description: Inventory list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/InventoryItem"
+    post:
+      operationId: saveInventoryCount
+      tags: [inventory]
+      summary: Save inventory count results
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/InventoryCountInput"
+      responses:
+        "200":
+          description: Saved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InventoryCountResult"
+
+  /stock-movements:
+    get:
+      operationId: getStockMovements
+      tags: [stock-movements]
+      summary: List stock movements
+      parameters:
+        - name: medicine_id
+          in: query
+          schema:
+            type: ["integer", "null"]
+        - name: type
+          in: query
+          schema:
+            type: ["string", "null"]
+        - name: date_from
+          in: query
+          schema:
+            type: ["string", "null"]
+        - name: date_to
+          in: query
+          schema:
+            type: ["string", "null"]
+      responses:
+        "200":
+          description: List of stock movements
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/StockMovement"
+
+  /audit-log:
+    get:
+      operationId: getAuditLog
+      tags: [audit-log]
+      summary: Get audit log entries
+      parameters:
+        - name: date_from
+          in: query
+          schema:
+            type: ["string", "null"]
+        - name: date_to
+          in: query
+          schema:
+            type: ["string", "null"]
+      responses:
+        "200":
+          description: Audit log entries
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AuditLogEntry"
+
+  /shifts:
+    get:
+      operationId: getShifts
+      tags: [shifts]
+      summary: List cashier shifts
+      responses:
+        "200":
+          description: List of shifts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Shift"
+    post:
+      operationId: createShift
+      tags: [shifts]
+      summary: Open a new cashier shift
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ShiftInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Shift"
+
+  /shifts/{id}/close:
+    post:
+      operationId: closeShift
+      tags: [shifts]
+      summary: Close a cashier shift
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CloseShiftInput"
+      responses:
+        "200":
+          description: Closed shift
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Shift"
+
+  /shifts/active:
+    get:
+      operationId: getActiveShift
+      tags: [shifts]
+      summary: Get currently active shift
+      responses:
+        "200":
+          description: Active shift or null
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ShiftOrNull"
+
+  /reports/expiry-analysis:
+    get:
+      operationId: getExpiryAnalysis
+      tags: [reports]
+      summary: Get expiry analysis for medicines
+      parameters:
+        - name: period
+          in: query
+          schema:
+            type: string
+            enum: [1month, 3months, 6months]
+            default: 3months
+      responses:
+        "200":
+          description: Expiry analysis
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ExpiryAnalysisItem"
+
+  /reports/stock-by-category:
+    get:
+      operationId: getStockByCategory
+      tags: [reports]
+      summary: Stock summary by category
+      responses:
+        "200":
+          description: Stock by category
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/StockByCategoryItem"
+
+  /reports/top-selling:
+    get:
+      operationId: getTopSelling
+      tags: [reports]
+      summary: Top selling medicines
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+      responses:
+        "200":
+          description: Top selling medicines
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/TopSellingItem"
+
+  /reports/profitability:
+    get:
+      operationId: getProfitabilityReport
+      tags: [reports]
+      summary: Profitability report by medicine
+      responses:
+        "200":
+          description: Profitability report
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ProfitabilityItem"
+
+  /reports/daily-sales:
+    get:
+      operationId: getDailySalesReport
+      tags: [reports]
+      summary: Daily/monthly sales and profit summary
+      parameters:
+        - name: period
+          in: query
+          schema:
+            type: string
+            enum: [today, month, year]
+            default: today
+      responses:
+        "200":
+          description: Sales summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SalesSummary"
+
+  /settings:
+    get:
+      operationId: getSettings
+      tags: [settings]
+      summary: Get pharmacy settings
+      responses:
+        "200":
+          description: Settings
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Settings"
+    patch:
+      operationId: updateSettings
+      tags: [settings]
+      summary: Update pharmacy settings
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SettingsInput"
+      responses:
+        "200":
+          description: Updated settings
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Settings"
+
 components:
   schemas:
     HealthStatus:
       type: object
+      required: [status]
       properties:
         status:
           type: string
-      required:
-        - status
 
+    DashboardSummary:
+      type: object
+      required: [todaySales, netProfit, totalMedicines, stockValue, expiredCount, lowStockCount]
+      properties:
+        todaySales:
+          type: number
+        netProfit:
+          type: number
+        totalMedicines:
+          type: integer
+        stockValue:
+          type: number
+        expiredCount:
+          type: integer
+        lowStockCount:
+          type: integer
+
+    SalesChartPoint:
+      type: object
+      required: [date, sales, profit]
+      properties:
+        date:
+          type: string
+        sales:
+          type: number
+        profit:
+          type: number
+
+    DashboardAlerts:
+      type: object
+      required: [lowStock, nearExpiry]
+      properties:
+        lowStock:
+          type: array
+          items:
+            $ref: "#/components/schemas/MedicineAlert"
+        nearExpiry:
+          type: array
+          items:
+            $ref: "#/components/schemas/MedicineAlert"
+
+    MedicineAlert:
+      type: object
+      required: [id, name, quantity, expiryDate]
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        quantity:
+          type: integer
+        expiryDate:
+          type: ["string", "null"]
+        reorderLevel:
+          type: ["integer", "null"]
+
+    Medicine:
+      type: object
+      required: [id, name, quantity, salePrice, purchasePrice]
+      properties:
+        id:
+          type: integer
+        barcode:
+          type: ["string", "null"]
+        name:
+          type: string
+        scientificName:
+          type: ["string", "null"]
+        manufacturer:
+          type: ["string", "null"]
+        unit:
+          type: ["string", "null"]
+        categoryId:
+          type: ["integer", "null"]
+        categoryName:
+          type: ["string", "null"]
+        location:
+          type: ["string", "null"]
+        purchasePrice:
+          type: number
+        salePrice:
+          type: number
+        quantity:
+          type: integer
+        productionDate:
+          type: ["string", "null"]
+        expiryDate:
+          type: ["string", "null"]
+        reorderLevel:
+          type: ["integer", "null"]
+        createdAt:
+          type: string
+
+    MedicineInput:
+      type: object
+      required: [name, salePrice, purchasePrice, quantity]
+      properties:
+        barcode:
+          type: ["string", "null"]
+        name:
+          type: string
+        scientificName:
+          type: ["string", "null"]
+        manufacturer:
+          type: ["string", "null"]
+        unit:
+          type: ["string", "null"]
+        categoryId:
+          type: ["integer", "null"]
+        location:
+          type: ["string", "null"]
+        purchasePrice:
+          type: number
+        salePrice:
+          type: number
+        quantity:
+          type: integer
+        productionDate:
+          type: ["string", "null"]
+        expiryDate:
+          type: ["string", "null"]
+        reorderLevel:
+          type: ["integer", "null"]
+
+    MedicineUpdate:
+      type: object
+      properties:
+        barcode:
+          type: ["string", "null"]
+        name:
+          type: ["string", "null"]
+        scientificName:
+          type: ["string", "null"]
+        manufacturer:
+          type: ["string", "null"]
+        unit:
+          type: ["string", "null"]
+        categoryId:
+          type: ["integer", "null"]
+        location:
+          type: ["string", "null"]
+        purchasePrice:
+          type: ["number", "null"]
+        salePrice:
+          type: ["number", "null"]
+        quantity:
+          type: ["integer", "null"]
+        productionDate:
+          type: ["string", "null"]
+        expiryDate:
+          type: ["string", "null"]
+        reorderLevel:
+          type: ["integer", "null"]
+
+    Category:
+      type: object
+      required: [id, name]
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        icon:
+          type: ["string", "null"]
+        medicineCount:
+          type: integer
+
+    CategoryInput:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+        icon:
+          type: ["string", "null"]
+
+    Supplier:
+      type: object
+      required: [id, name]
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        phone:
+          type: ["string", "null"]
+        address:
+          type: ["string", "null"]
+        balance:
+          type: number
+        totalPurchases:
+          type: number
+
+    SupplierInput:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+        phone:
+          type: ["string", "null"]
+        address:
+          type: ["string", "null"]
+        balance:
+          type: number
+
+    Customer:
+      type: object
+      required: [id, name]
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        phone:
+          type: ["string", "null"]
+        address:
+          type: ["string", "null"]
+        balance:
+          type: number
+        notes:
+          type: ["string", "null"]
+        totalSales:
+          type: number
+
+    CustomerInput:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+        phone:
+          type: ["string", "null"]
+        address:
+          type: ["string", "null"]
+        balance:
+          type: number
+        notes:
+          type: ["string", "null"]
+
+    SaleItem:
+      type: object
+      required: [medicineId, medicineName, quantity, unitPrice, total]
+      properties:
+        id:
+          type: integer
+        medicineId:
+          type: integer
+        medicineName:
+          type: string
+        quantity:
+          type: integer
+        unitPrice:
+          type: number
+        purchasePrice:
+          type: number
+        total:
+          type: number
+
+    Sale:
+      type: object
+      required: [id, invoiceNumber, total, finalTotal, profit, createdAt]
+      properties:
+        id:
+          type: integer
+        invoiceNumber:
+          type: string
+        customerId:
+          type: ["integer", "null"]
+        customerName:
+          type: ["string", "null"]
+        total:
+          type: number
+        discount:
+          type: number
+        finalTotal:
+          type: number
+        profit:
+          type: number
+        status:
+          type: string
+        createdAt:
+          type: string
+
+    SaleWithItems:
+      type: object
+      required: [id, invoiceNumber, total, finalTotal, profit, createdAt, items]
+      properties:
+        id:
+          type: integer
+        invoiceNumber:
+          type: string
+        customerId:
+          type: ["integer", "null"]
+        customerName:
+          type: ["string", "null"]
+        total:
+          type: number
+        discount:
+          type: number
+        finalTotal:
+          type: number
+        profit:
+          type: number
+        status:
+          type: string
+        createdAt:
+          type: string
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/SaleItem"
+
+    SalesList:
+      type: object
+      required: [sales, totalCount, totalSales, totalProfit]
+      properties:
+        sales:
+          type: array
+          items:
+            $ref: "#/components/schemas/Sale"
+        totalCount:
+          type: integer
+        totalSales:
+          type: number
+        totalProfit:
+          type: number
+
+    SaleItemInput:
+      type: object
+      required: [medicineId, quantity, unitPrice]
+      properties:
+        medicineId:
+          type: integer
+        quantity:
+          type: integer
+        unitPrice:
+          type: number
+
+    SaleInput:
+      type: object
+      required: [items]
+      properties:
+        customerId:
+          type: ["integer", "null"]
+        discount:
+          type: number
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/SaleItemInput"
+        status:
+          type: string
+
+    PurchaseItem:
+      type: object
+      required: [medicineId, medicineName, quantity, unitPrice, total]
+      properties:
+        id:
+          type: integer
+        medicineId:
+          type: integer
+        medicineName:
+          type: string
+        quantity:
+          type: integer
+        unitPrice:
+          type: number
+        total:
+          type: number
+        productionDate:
+          type: ["string", "null"]
+        expiryDate:
+          type: ["string", "null"]
+
+    Purchase:
+      type: object
+      required: [id, invoiceNumber, total, createdAt]
+      properties:
+        id:
+          type: integer
+        invoiceNumber:
+          type: string
+        supplierId:
+          type: ["integer", "null"]
+        supplierName:
+          type: ["string", "null"]
+        total:
+          type: number
+        status:
+          type: string
+        createdAt:
+          type: string
+
+    PurchaseWithItems:
+      type: object
+      required: [id, invoiceNumber, total, createdAt, items]
+      properties:
+        id:
+          type: integer
+        invoiceNumber:
+          type: string
+        supplierId:
+          type: ["integer", "null"]
+        supplierName:
+          type: ["string", "null"]
+        total:
+          type: number
+        status:
+          type: string
+        createdAt:
+          type: string
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/PurchaseItem"
+
+    PurchaseItemInput:
+      type: object
+      required: [medicineId, quantity, unitPrice]
+      properties:
+        medicineId:
+          type: integer
+        quantity:
+          type: integer
+        unitPrice:
+          type: number
+        productionDate:
+          type: ["string", "null"]
+        expiryDate:
+          type: ["string", "null"]
+
+    PurchaseInput:
+      type: object
+      required: [items]
+      properties:
+        supplierId:
+          type: ["integer", "null"]
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/PurchaseItemInput"
+
+    Payment:
+      type: object
+      required: [id, partyType, amount, method, createdAt]
+      properties:
+        id:
+          type: integer
+        partyType:
+          type: string
+        partyId:
+          type: ["integer", "null"]
+        partyName:
+          type: ["string", "null"]
+        amount:
+          type: number
+        method:
+          type: string
+        notes:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+
+    PaymentInput:
+      type: object
+      required: [partyType, amount, method]
+      properties:
+        partyType:
+          type: string
+          enum: [supplier, customer]
+        partyId:
+          type: ["integer", "null"]
+        amount:
+          type: number
+        method:
+          type: string
+          enum: [cash, check, transfer]
+        notes:
+          type: ["string", "null"]
+
+    Return:
+      type: object
+      required: [id, type, medicineId, medicineName, quantity, amount, createdAt]
+      properties:
+        id:
+          type: integer
+        type:
+          type: string
+        medicineId:
+          type: integer
+        medicineName:
+          type: string
+        referenceId:
+          type: ["integer", "null"]
+        quantity:
+          type: integer
+        amount:
+          type: number
+        reason:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+
+    ReturnInput:
+      type: object
+      required: [type, medicineId, quantity, amount]
+      properties:
+        type:
+          type: string
+          enum: [sale, purchase]
+        medicineId:
+          type: integer
+        referenceId:
+          type: ["integer", "null"]
+        quantity:
+          type: integer
+        amount:
+          type: number
+        reason:
+          type: ["string", "null"]
+
+    Expense:
+      type: object
+      required: [id, category, amount, createdAt]
+      properties:
+        id:
+          type: integer
+        category:
+          type: string
+        description:
+          type: ["string", "null"]
+        amount:
+          type: number
+        createdAt:
+          type: string
+
+    ExpenseInput:
+      type: object
+      required: [category, amount]
+      properties:
+        category:
+          type: string
+        description:
+          type: ["string", "null"]
+        amount:
+          type: number
+
+    InventoryItem:
+      type: object
+      required: [medicineId, medicineName, systemQuantity]
+      properties:
+        medicineId:
+          type: integer
+        medicineName:
+          type: string
+        barcode:
+          type: ["string", "null"]
+        systemQuantity:
+          type: integer
+        actualQuantity:
+          type: ["integer", "null"]
+        difference:
+          type: ["integer", "null"]
+
+    InventoryCountItemInput:
+      type: object
+      required: [medicineId, actualQuantity]
+      properties:
+        medicineId:
+          type: integer
+        actualQuantity:
+          type: integer
+
+    InventoryCountInput:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/InventoryCountItemInput"
+
+    InventoryCountResult:
+      type: object
+      required: [savedCount, adjustedCount]
+      properties:
+        savedCount:
+          type: integer
+        adjustedCount:
+          type: integer
+
+    StockMovement:
+      type: object
+      required: [id, medicineId, medicineName, type, quantity, createdAt]
+      properties:
+        id:
+          type: integer
+        medicineId:
+          type: integer
+        medicineName:
+          type: string
+        type:
+          type: string
+        quantity:
+          type: integer
+        reference:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+
+    AuditLogEntry:
+      type: object
+      required: [id, operation, reference, createdAt]
+      properties:
+        id:
+          type: integer
+        operation:
+          type: string
+        reference:
+          type: ["string", "null"]
+        userId:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+
+    Shift:
+      type: object
+      required: [id, openingBalance, status, startTime]
+      properties:
+        id:
+          type: integer
+        openingBalance:
+          type: number
+        closingBalance:
+          type: ["number", "null"]
+        totalSales:
+          type: ["number", "null"]
+        status:
+          type: string
+        startTime:
+          type: string
+        endTime:
+          type: ["string", "null"]
+        notes:
+          type: ["string", "null"]
+
+    ShiftInput:
+      type: object
+      required: [openingBalance]
+      properties:
+        openingBalance:
+          type: number
+        notes:
+          type: ["string", "null"]
+
+    CloseShiftInput:
+      type: object
+      required: [closingBalance]
+      properties:
+        closingBalance:
+          type: number
+        notes:
+          type: ["string", "null"]
+
+    ShiftOrNull:
+      type: object
+      properties:
+        shift:
+          oneOf:
+            - $ref: "#/components/schemas/Shift"
+            - type: "null"
+
+    ExpiryAnalysisItem:
+      type: object
+      required: [id, name, expiryDate, quantity, daysUntilExpiry]
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        barcode:
+          type: ["string", "null"]
+        expiryDate:
+          type: string
+        quantity:
+          type: integer
+        daysUntilExpiry:
+          type: integer
+        urgency:
+          type: string
+
+    StockByCategoryItem:
+      type: object
+      required: [categoryName, medicineCount, totalQuantity, totalValue]
+      properties:
+        categoryName:
+          type: string
+        medicineCount:
+          type: integer
+        totalQuantity:
+          type: integer
+        totalValue:
+          type: number
+
+    TopSellingItem:
+      type: object
+      required: [medicineId, medicineName, totalQuantity, totalRevenue]
+      properties:
+        medicineId:
+          type: integer
+        medicineName:
+          type: string
+        totalQuantity:
+          type: integer
+        totalRevenue:
+          type: number
+        totalProfit:
+          type: number
+
+    ProfitabilityItem:
+      type: object
+      required: [medicineId, medicineName, totalRevenue, totalCost, profit, margin]
+      properties:
+        medicineId:
+          type: integer
+        medicineName:
+          type: string
+        totalRevenue:
+          type: number
+        totalCost:
+          type: number
+        profit:
+          type: number
+        margin:
+          type: number
+
+    SalesSummary:
+      type: object
+      required: [totalSales, totalProfit, totalExpenses, invoiceCount]
+      properties:
+        totalSales:
+          type: number
+        totalProfit:
+          type: number
+        totalExpenses:
+          type: number
+        invoiceCount:
+          type: integer
+        period:
+          type: string
+
+    Settings:
+      type: object
+      properties:
+        id:
+          type: integer
+        pharmacyName:
+          type: string
+        address:
+          type: ["string", "null"]
+        phone:
+          type: ["string", "null"]
+        pin:
+          type: ["string", "null"]
+        lowStockThreshold:
+          type: integer
+        nearExpiryDays:
+          type: integer
+        taxRate:
+          type: number
+        printerName:
+          type: ["string", "null"]
+        invoiceFooter:
+          type: ["string", "null"]
+        licenseKey:
+          type: ["string", "null"]
+        appVersion:
+          type: string
+
+    SettingsInput:
+      type: object
+      properties:
+        pharmacyName:
+          type: ["string", "null"]
+        address:
+          type: ["string", "null"]
+        phone:
+          type: ["string", "null"]
+        pin:
+          type: ["string", "null"]
+        lowStockThreshold:
+          type: ["integer", "null"]
+        nearExpiryDays:
+          type: ["integer", "null"]
+        taxRate:
+          type: ["number", "null"]
+        printerName:
+          type: ["string", "null"]
+        invoiceFooter:
+          type: ["string", "null"]
+        licenseKey:
+          type: ["string", "null"]
