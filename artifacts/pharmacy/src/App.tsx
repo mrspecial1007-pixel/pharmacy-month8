@@ -9,17 +9,12 @@ import Medicines from "@/pages/medicines";
 import POS from "@/pages/pos";
 import Purchases from "@/pages/purchases";
 import Accounts from "@/pages/accounts";
-import SalesHistory from "@/pages/sales-history";
 import Returns from "@/pages/returns";
 import Shifts from "@/pages/shifts";
 import Inventory from "@/pages/inventory";
-import StockMovements from "@/pages/stock-movements";
 import AuditLog from "@/pages/audit-log";
 import ExpiryAnalysis from "@/pages/expiry-analysis";
 import Reports from "@/pages/reports";
-import Categories from "@/pages/categories";
-import Suppliers from "@/pages/suppliers";
-import Customers from "@/pages/customers";
 import Expenses from "@/pages/expenses";
 import Settings from "@/pages/settings";
 import NotFound from "@/pages/not-found";
@@ -35,17 +30,12 @@ function Router() {
         <Route path="/pos" component={POS} />
         <Route path="/purchases" component={Purchases} />
         <Route path="/accounts" component={Accounts} />
-        <Route path="/sales-history" component={SalesHistory} />
         <Route path="/returns" component={Returns} />
         <Route path="/shifts" component={Shifts} />
         <Route path="/inventory" component={Inventory} />
-        <Route path="/stock-movements" component={StockMovements} />
         <Route path="/audit-log" component={AuditLog} />
         <Route path="/expiry-analysis" component={ExpiryAnalysis} />
         <Route path="/reports" component={Reports} />
-        <Route path="/categories" component={Categories} />
-        <Route path="/suppliers" component={Suppliers} />
-        <Route path="/customers" component={Customers} />
         <Route path="/expenses" component={Expenses} />
         <Route path="/settings" component={Settings} />
         <Route component={NotFound} />
